@@ -63,7 +63,9 @@ def control(data, lock):
         qube.setMotorVoltage(0.0)
         #OK motherfucker
 
-        seriServoSpReader(serialSPRedr)
+        #seriServoSpReader(serialSPRedr)
+        print(f"this is the motor setpoint position: {seriServoSpReader(serialSPRedr)}")
+        print(f"This is the motor position: {qube.getMotorAngle()}")
 
 
 def getDT():

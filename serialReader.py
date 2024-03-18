@@ -17,15 +17,20 @@ def seriServoSpReader(setptRedrPrt):
         if setptRedrPrt.in_waiting > 0:
             line = setptRedrPrt.readline().decode('utf-8').rstrip()
             try:
-                # Convert the string to a float and print
+                # Convert the string to a float and print it
                 val = float(line)
-                print(f"Received float value: {val}")
-                return val
+                #print(f"Received float value: {val}")
+                if (val > 100) and (val < -100):
+                    print(f"output out of range")
+                    return val
+                else:
+                    return val
 
 
 
             except ValueError:
-                # In case the conversion fails, which can happen if the data is incomplete or corrupted.
-                print(f"Failed to convert to float: {line}")
+                # In case the conversion fails,
+                # This could happen if the data is incomplete or corrupted.
+                print(f"Failed to read the float: {line}")
 
                 return -180
