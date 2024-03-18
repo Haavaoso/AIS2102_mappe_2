@@ -13,13 +13,16 @@
 
 from QUBE import *
 from logger import *
+from serialReader import *
 from com import *
 from liveplot import *
 from time import time
 import threading
 
 # Replace with the Arduino port. Can be found in the Arduino IDE (Tools -> Port:)
-port = "COM0"
+port = "COM11"
+setptRedrPrt = "COM8"
+
 baudrate = 115200
 qube = QUBE(port, baudrate)
 
@@ -31,6 +34,12 @@ qube.resetPendulumEncoder()
 enableLogging()
 
 t_last = time()
+
+m_target = 0
+p_target = 0
+pid = PID()
+
+serialSPRedr = serial.Serial(setptRedrPrt, 9600, timeout=1)
 
 
 def control(data, lock):
@@ -51,6 +60,10 @@ def control(data, lock):
         dt = getDT()
 
         ### Your code goes here
+        qube.setMotorVoltage(0.0)
+        #OK motherfucker
+
+        seriServoSpReader(serialSPRedr)
 
 
 def getDT():
