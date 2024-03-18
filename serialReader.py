@@ -20,9 +20,12 @@ def seriServoSpReader(setptRedrPrt):
                 # Convert the string to a float and print it
                 val = float(line)
                 #print(f"Received float value: {val}")
-                if (val > 100) or (val < -100):
-                    print(f"output out of range")
-                    return val
+                if (val > 100):
+                    print("Output out of range")
+                    return 100
+                elif (val < -100):
+                    print("Output out of range")
+                    return -100
                 else:
                     return val
 
