@@ -21,7 +21,7 @@ import threading
 
 # Replace with the Arduino port. Can be found in the Arduino IDE (Tools -> Port:)
 port = "COM11"
-setptRedrPrt = "COM8"
+setptRedrPrt = "COM8" #Com port for reading the user input for the setpoint for motor position
 
 baudrate = 115200
 qube = QUBE(port, baudrate)

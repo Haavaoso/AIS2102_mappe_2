@@ -1,6 +1,7 @@
 import sys
 import PyQt5.QtWidgets
 from PyQt5.QtGui import QPalette, QColor
+from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QMainWindow, QGridLayout, QLabel, QLineEdit, QCheckBox, QHBoxLayout
 from PyQt5.QtCore import QTimer
 import pyqtgraph as pg
 from com import Packet
@@ -68,9 +69,9 @@ class LivePlotter(QMainWindow):
         self.dataPointsLimit = 1500
         # Initialize data for each plot
         self.plot_data = data
-        self.lock = lock    
-        self.packet = Packet()  
-    
+        self.lock = lock
+        self.packet = Packet()
+
         # Create labels and input fields for PID values
         pid_labels = [
             "Proportional Gain (KP):",
