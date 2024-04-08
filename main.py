@@ -17,11 +17,18 @@ from serialReader import *
 from com import *
 from liveplot import *
 from time import time
+import numpy as np
 import threading
+import math
+
+
+
+
+
 
 # Replace with the Arduino port. Can be found in the Arduino IDE (Tools -> Port:)
-port = "COM11"
-setptRedrPrt = "COM8" #Com port for reading the user input for the setpoint for motor position
+port = "COM3"
+# setptRedrPrt = "COM8" #Com port for reading the user input for the setpoint for motor position
 
 baudrate = 115200
 qube = QUBE(port, baudrate)
@@ -39,11 +46,14 @@ m_target = 0
 p_target = 0
 pid = PID()
 
-serialSPRedr = serial.Serial(setptRedrPrt, 9600, timeout=1)
+
+#serialSPRedr = serial.Serial(setptRedrPrt, 9600, timeout=1)
 
 
 def control(data, lock):
-    global m_target, p_target, pid
+    global m_target, p_target, pid, iii
+    start_time = time()  # Get the start time
+
     while True:
         # Updates the qube - Sends and receives data
         qube.update()
@@ -51,6 +61,13 @@ def control(data, lock):
         # Gets the logdata and writes it to the log file
         logdata = qube.getLogData(m_target, p_target)
         save_data(logdata)
+        current_time = time()  # Get the current time
+        elapsed_time = current_time - start_time  # Calculate elapsed time
+        sine_value = math.sin(elapsed_time)
+
+        # Scale the sine value to match the motor voltage range
+        # This example assumes a full range (-24 to 24 volts), adjust as necessary
+        motor_voltage = sine_value * 3
 
         # Multithreading stuff that must happen. Dont mind it.
         with lock:
@@ -59,13 +76,13 @@ def control(data, lock):
         # Get deltatime
         dt = getDT()
 
-        ### Your code goes here
-        qube.setMotorVoltage(0.0)
+
+        qube.setMotorVoltage(motor_voltage)
         #OK motherfucker
 
         #seriServoSpReader(serialSPRedr)
-        print(f"this is the motor setpoint position: {seriServoSpReader(serialSPRedr)}")
-        print(f"This is the motor position: {qube.getMotorAngle()}")
+        # print(f"this is the motor setpoint position: {seriServoSpReader(serialSPRedr)}")
+        print(f"This is the motor position: {qube.getMotorRPM()} and voltage {motor_voltage}")
 
 
 def getDT():
@@ -91,6 +108,7 @@ def doMTStuff(data):
 
 if __name__ == "__main__":
     _data = [[], [], [], [], [], [], [], Packet()]
+
     lock = threading.Lock()
     thread1 = threading.Thread(target=startPlot, args=(_data, lock))
     thread2 = threading.Thread(target=control, args=(_data, lock))

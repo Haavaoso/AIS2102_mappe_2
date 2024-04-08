@@ -115,7 +115,7 @@ class MotorControlGUI:
 
 
 def main():
-    port = "COM9"
+    port = "COM5"
     baudrate = 250000
     qube = QUBE(port, baudrate)
     qube.resetMotorEncoder()
