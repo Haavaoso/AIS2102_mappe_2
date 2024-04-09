@@ -20,22 +20,28 @@ from com import *
 from liveplot import *
 import time
 import threading
-
+import math
 
 A = np.array([[0, 1], [0, -10.05]])
 B = np.array([[0], [239.25]])
 C = np.array([1,0])# System matrices
 K = np.array([[0.00619, 0.00127]])
-Ki = 0.0305
+Ki = 0.01
 #integralError= 0
-L = np.array([[17.0], [140.3025]])  # Observer gain matrix
+L = np.array([[17.0], [-0.3]])  # Observer gain matrix
 u = 0 #input
+
+#THIS IS THE BEGINNING OF THE SECTION WHERE WE CAN ENABLE/DISABLE DIFFERENT FUNCTIONS OF THE PROGRAM
+ENABLE_DATA_RECORDING = True
+
+
+#THIS IS THE END OF THE SECTION WHERE WE CAN ENABLE/DISABLE DIFFERENT FUNCTIONS OF THE PROGRAM
 
 
 
 # Replace with the Arduino port. Can be found in the Arduino IDE (Tools -> Port:)
 port = "COM10"
-#setptRedrPrt = "COM8" #Com port for reading the user input for the setpoint for motor position
+setptRedrPrt = "COM8" #Com port for reading the user input for the setpoint for motor position
 
 baudrate = 115200
 qube = QUBE(port, baudrate)
@@ -49,7 +55,7 @@ enableLogging()
 
 #t_last = time()
 
-
+iteration = 0
 lastRunTime = 0
 m_target = 0
 p_target = 0
@@ -59,13 +65,34 @@ SSController = StateSpaceController(A, B, C, K, Ki, L)
 
 
 
+fieldnames = ["iteration","observerX1AngularPosition", "observerX2AngularVelocity", "realAngularPosition", "motorAngularSpeed"]
+output_file = f'observer_plots/observerData.csv'
+with open(output_file, 'w') as csv_file:
+    csv_writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+    csv_writer.writeheader()
+
+def saveObserverData(observerAngularPosition, observerAngularVelocity, qube):
+    global iteration
+    output_file = f'observer_plots/observerData.csv'
+    with open(output_file, 'a') as csv_file:
+        csv_writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+        info = {
+            "iteration": iteration,
+            "observerX1AngularPosition": observerAngularPosition,
+            "observerX2AngularVelocity": observerAngularVelocity,
+            "realAngularPosition": qube.getMotorAngle(),
+            "motorAngularSpeed": ((qube.getMotorRPM())*(math.pi)*(2/60)),
+        }
+        csv_writer.writerow(info)
+        iteration += 1
+
 
 #serialSPRedr = serial.Serial(setptRedrPrt, 9600, timeout=1)
 
 #controlOutput = SSController.runControlLoop(qube.getMotorAngle(), 0, 0.0001)
 
 def control(data, lock):
-    global m_target, p_target, pid, controlOutput, zoh, lastRunTime
+    global m_target, p_target, pid, controlOutput, SSController, zoh, lastRunTime
     while True:
         # Updates the qube - Sends and receives data
         qube.update()
@@ -81,8 +108,13 @@ def control(data, lock):
         # Get deltatime
         #dt = getDT(SSController.control())
 
+        if ENABLE_DATA_RECORDING:
+            # ---------------------- THIS IS SAVING THE STATES --------------------------
+            saveObserverData(SSController.getObsState1()[0], SSController.getObsState2()[0], qube)
+            # ----------------- THIS IS SAVING THE STATES IN THE CSV FILE --------------------------
+
         #if zoh.ckeckTimer(time.perf_counter()):
-            #controlOutput = SSController.runControlLoop(qube.getMotorPosition(), seriServoSpReader(serialSPRedr), time.perf_counter()-lastRunTime)
+        #controlOutput = SSController.runControlLoop(qube.getMotorAngle(), seriServoSpReader(serialSPRedr), time.perf_counter()-lastRunTime)
         controlOutput = SSController.runControlLoop(qube.getMotorAngle(), 0, time.perf_counter() - lastRunTime)
         lastRunTime = time.perf_counter()
 

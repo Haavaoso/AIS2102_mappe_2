@@ -22,6 +22,12 @@ class StateSpaceController:
         self.integralError = 0
         self.u = 0
 
+    def getObsState1(self):
+        return self.xHat[0]
+
+    def getObsState2(self):
+        return self.xHat[1]
+
     def observerUpdate(self, y, dt, reference):
         # Observer update equation
         yHat = self.C @ self.xHat
