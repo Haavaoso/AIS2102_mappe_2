@@ -1,18 +1,11 @@
 import numpy as np
 
 # System parameters
-A = np.array([[0, 1], [0, -10.05]])
-B = np.array([[0], [239.25]])
-C = np.array([1,0])# System matrices
-K = np.array([[0.2]], [0.0165])  # State feedback matrix
-Ki = -0.3511
-#integralError= 0
-L = [17.9, 15.60]  # Observer gain matrix
-u = 0 #input
 
 
-xHatDot = np.array([[0], [0]])  # Initial
-xHat = np.array([[0], [0]])    # Initial
+
+#xHatDot = np.array([[0], [0]])  # Initial
+#xHat = np.array([[0], [0]])    # Initial
 
 class StateSpaceController:
     def __init__(self, A, B, C, K, Ki, L):
@@ -24,8 +17,8 @@ class StateSpaceController:
         self.Ki = Ki
         self.L = L
 
-        # Initialize state variables
-        self.xHat = np.zeros((A.shape[0], 1))  # Assuming A is square
+        # Initializing the state variables
+        self.xHat = np.zeros((A.shape[0], 1))
         self.integralError = 0
         self.u = 0
 
@@ -33,28 +26,36 @@ class StateSpaceController:
         # Observer update equation
         yHat = self.C @ self.xHat
         error = y - yHat
-        self.xHat += dt * (self.A @ self.xHat + self.B * self.u + self.L.reshape(-1, 1) * error)
+        #self.xHat += dt * (self.A @ self.xHat + self.B * self.u + self.L.reshape(-1, 1) * error)
+        # NEW SELF.XHAT
+        self.xHat = self.xHat + dt * (self.A @ self.xHat + self.B * self.u + self.L * error)
 
-        # Update integral error
-        self.integralError += (reference - y) * dt
+        self.integralWindup(reference, y, dt)
+
+
 
     def calculateControlInput(self, reference):
-        # Control law: u = -K * x_hat - Ki * integral_error
-        self.u = -float(self.K @ self.xHat + self.Ki * self.integralError)
+        # The control law: u = -K * x_hat - Ki * integral_error
+        self.u = -float((self.K @ self.xHat - self.Ki * self.integralError))
 
         # Enforce actuator limits
-        self.u = max(min(self.u, 24), -24)
+
+        #return self.u
+    def integralWindup(self, reference, y, dt):
+        if (self.integralError > 10 or self.integralError < -10):
+            self.integralError = 0
+        else:
+            self.integralError += (reference - y) * dt
+    def control(self):
+
         return self.u
 
-    def applyControl(self):
-        # Placeholder for actuator code
-        pass
-
-    def runControlLoop(self, read_sensors, reference, dt):
-        y = read_sensors()  # Read sensor data
-        self.observer_update(y, dt, reference)
-        u = self.calculate_control_input(reference)
-        self.apply_control()
+    def runControlLoop(self, sensorReading, reference, dt):
+        y = sensorReading
+        self.observerUpdate(y, dt, reference)
+        u = self.calculateControlInput(reference)
+        print(f"error: {(reference - y)} integralerror: {self.integralError}, output: {u}. sensor reading: {sensorReading}, observer State: {self.xHat} this is DT: {dt}")
+        return self.control()
 
 
 #"""
@@ -89,22 +90,22 @@ class StateSpaceController:
     
     
 
-def controller_update():
-    # Control law: u = -K * xHatDot
-    u = -K @ xHatDot
-
-    if 24 <= u:
-     return 23.9
-    elif -24 >= u:
-     return -23.9
-
-    return u
-
+#def controller_update():
+#    # Control law: u = -K * xHatDot
+#    u = -K @ xHatDot#
+#
+#    if 24 <= u:
+#    return 23.9
+#    elif -24 >= u:
+#     return -23.9
+#
+#    return u
+#
 # Main control loop
-while True:
-    y = readSensors()  # Read sensor data to get y
-    u = controllerUpdate()  # Compute control action
-    observerUpdate(y, u)  # Update state estimate
-    applyControl(u)  # Apply control action
-    # Wait for next iteration (dt) to maintain loop timing
-"""
+#while True:
+#    y = readSensors()  # Read sensor data to get y
+#    u = controllerUpdate()  # Compute control action
+#    observerUpdate(y, u)  # Update state estimate
+#    applyControl(u)  # Apply control action
+#    # Wait for next iteration (dt) to maintain loop timing
+#"""

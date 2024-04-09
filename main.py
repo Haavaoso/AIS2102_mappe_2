@@ -5,23 +5,37 @@
 # qube.resetMotorEncoder() - Resets the motor encoder in the current position.
 # qube.resetPendulumEncoder() - Resets the pendulum encoder in the current position.
 
-# qube.getMotorPosition() - Returns the cumulative angular positon of the motor.
+# qube.getAnglePosition() - Returns the cumulative angular positon of the motor.
 # qube.getPendulumPosition() - Returns the cumulative angular position of the pendulum.
 # qube.getMotorRPM() - Returns the newest rpm reading of the motor.
 # qube.getMotorCurrent() - Returns the newest reading of the motor's current.
 # ------------------------------------- AVAILABLE FUNCTIONS --------------------------------#
 
 from QUBE import *
+from fullStateFeedback import *
 from logger import *
 from serialReader import *
+from zeroOrderHold import *
 from com import *
 from liveplot import *
-from time import time
+import time
 import threading
 
+
+A = np.array([[0, 1], [0, -10.05]])
+B = np.array([[0], [239.25]])
+C = np.array([1,0])# System matrices
+K = np.array([[0.00619, 0.00127]])
+Ki = 0.0305
+#integralError= 0
+L = np.array([[17.0], [140.3025]])  # Observer gain matrix
+u = 0 #input
+
+
+
 # Replace with the Arduino port. Can be found in the Arduino IDE (Tools -> Port:)
-port = "COM11"
-setptRedrPrt = "COM8" #Com port for reading the user input for the setpoint for motor position
+port = "COM10"
+#setptRedrPrt = "COM8" #Com port for reading the user input for the setpoint for motor position
 
 baudrate = 115200
 qube = QUBE(port, baudrate)
@@ -33,17 +47,25 @@ qube.resetPendulumEncoder()
 # Enables logging - comment out to remove
 enableLogging()
 
-t_last = time()
+#t_last = time()
 
+
+lastRunTime = 0
 m_target = 0
 p_target = 0
 pid = PID()
+zoh = ZeroOrderHold(0.05)
+SSController = StateSpaceController(A, B, C, K, Ki, L)
 
-serialSPRedr = serial.Serial(setptRedrPrt, 9600, timeout=1)
 
+
+
+#serialSPRedr = serial.Serial(setptRedrPrt, 9600, timeout=1)
+
+#controlOutput = SSController.runControlLoop(qube.getMotorAngle(), 0, 0.0001)
 
 def control(data, lock):
-    global m_target, p_target, pid
+    global m_target, p_target, pid, controlOutput, zoh, lastRunTime
     while True:
         # Updates the qube - Sends and receives data
         qube.update()
@@ -57,15 +79,16 @@ def control(data, lock):
             doMTStuff(data)
 
         # Get deltatime
-        dt = getDT()
+        #dt = getDT(SSController.control())
+
+        #if zoh.ckeckTimer(time.perf_counter()):
+            #controlOutput = SSController.runControlLoop(qube.getMotorPosition(), seriServoSpReader(serialSPRedr), time.perf_counter()-lastRunTime)
+        controlOutput = SSController.runControlLoop(qube.getMotorAngle(), 0, time.perf_counter() - lastRunTime)
+        lastRunTime = time.perf_counter()
 
         ### Your code goes here
-        qube.setMotorVoltage(0.0)
-        #OK motherfucker
-
-        #seriServoSpReader(serialSPRedr)
-        print(f"this is the motor setpoint position: {seriServoSpReader(serialSPRedr)}")
-        print(f"This is the motor position: {qube.getMotorAngle()}")
+        qube.setMotorVoltage(controlOutput)
+        #O
 
 
 def getDT():
