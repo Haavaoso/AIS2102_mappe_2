@@ -27,7 +27,7 @@ import math
 
 
 # Replace with the Arduino port. Can be found in the Arduino IDE (Tools -> Port:)
-port = "COM5"
+port = "COM4"
 # setptRedrPrt = "COM8" #Com port for reading the user input for the setpoint for motor position
 
 baudrate = 115200
@@ -75,9 +75,9 @@ def control(data, lock):
 
         # Get deltatime
         dt = getDT()
-        #x2 = pid.regulate(p_target, qube.getMotorAngle(), dt)
-        x2 = pid.regulate(1000, qube.getMotorRPM(), dt)
-        qube.setMotorVoltage(x2)
+        x2 = pid.regulate(p_target, qube.getMotorAngle(), dt)
+        #x2 = pid.regulate(1000, qube.getMotorRPM(), dt)
+        qube.setMotorVoltage(motor_voltage)
         #OK motherfucker
 
         #seriServoSpReader(serialSPRedr)

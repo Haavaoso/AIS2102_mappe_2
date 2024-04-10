@@ -3,9 +3,9 @@ import sys
 
 class PID:
     def __init__(self):
-        self.kp = 0.05
-        self.ki = 0.01
-        self.kd = 0.0005
+        self.kp = 0.006
+        self.ki = 0.004
+        self.kd = 0.002
 
         self.windup = 0
         self.lastIntegral = 0
