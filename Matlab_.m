@@ -31,8 +31,10 @@ syms s
 A = [0 1; 
     0 -10.05];
 B = [0; 239.4];
-C = [0 1];
+C = [1 0];
 D = [0];
+
+L = [17; 4.3];
 
 [a1,b1] = ss2tf(A, B, C, D);
 
@@ -40,7 +42,7 @@ lol = tf(a1, b1);
 
 %% Aim for 20% overshoot and a setteling time of 5s
 
-OS = 20;
+OS = 5;
 T_s = 2;
 
 zeta = log(OS/100)/sqrt(pi^2+(log(OS/100))^2);
