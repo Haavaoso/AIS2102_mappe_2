@@ -1,34 +1,62 @@
 import numpy as np
 
 # System parameters
-A, B, C, D = ...  # System matrices
-K = ...  # State feedback matrix
-L = ...  # Observer gain matrix
 
-# Initial conditions
-x_hat = np.zeros((A.shape[0],))  # Initial state estimate
 
-def read_sensors():
-    """Simulate or interface code to read sensor data."""
-    return np.array([...])
 
-def apply_control(u):
-    """Simulate or interface code to apply control input to actuators."""
-    pass
 
-def observer_update(y, u, dt):
-    global x_hat
-    # Observer update equation: x_hat_dot = A*x_hat + B*u + L*(y - C*x_hat)
-    x_hat = x_hat + (A @ x_hat + B @ u + L @ (y - C @ x_hat)) * dt
 
-def controller_update():
-    # Control law: u = -K * x_hat
-    return -K @ x_hat
+class StateSpaceController:
+    def __init__(self, A, B, C, K, Ki, L):
+        # Initialize system matrices and gains
+        self.A = A
+        self.B = B
+        self.C = C
+        self.K = K
+        self.Ki = Ki
+        self.L = L
 
-# Main control loop
-while True:
-    y = read_sensors()  # Read sensor data to get y
-    u = controller_update()  # Compute control action
-    observer_update(y, u)  # Update state estimate
-    apply_control(u)  # Apply control action
-    # Wait for next iteration (dt) to maintain loop timing
+        # Initializing the state variables
+        self.xHat = np.zeros((A.shape[0], 1))
+        self.integralError = 0
+        self.u = 0
+
+    def getObsState1(self):
+        return self.xHat[0]
+
+    def getObsState2(self):
+        return self.xHat[1]
+
+    def observerUpdate(self, y, dt, reference):
+        # Observer update equation
+        yHat = self.C @ self.xHat
+        error = y - yHat
+        # NEW SELF.XHAT
+        self.xHat = self.xHat + dt * (self.A @ self.xHat + self.B * self.u + self.L * error)
+
+        self.integralWindup(reference, y, dt)
+
+    def calculateControlInput(self):
+        # The control law: u = -float(K * x_hat - Ki * integral_error)
+        self.u = -float((self.K @ self.xHat - self.Ki * self.integralError))
+
+    def integralWindup(self, reference, y, dt):
+        if (self.integralError > 10 or self.integralError < -10):
+            self.integralError = 0
+        else:
+            self.integralError += (reference - y) * dt
+    def control(self):
+
+        return self.u
+
+    def runControlLoop(self, sensorReading, reference, dt):
+        y = sensorReading
+        self.observerUpdate(y, dt, reference)
+        u = self.calculateControlInput(reference)
+        print(f"error: {(reference - y)} integralerror: {self.integralError}, output: {u}. sensor reading: {sensorReading}, observer State: {self.xHat} this is DT: {dt}")
+        return self.control()
+
+
+    
+    
+
