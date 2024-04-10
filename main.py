@@ -24,22 +24,22 @@ import math
 
 A = np.array([[0, 1], [0, -10.05]])
 B = np.array([[0], [239.25]])
-C = np.array([1,0])# System matrices
+C = np.array([1,0])# Here we
 K = np.array([[0.00619, 0.00127]])
 Ki = 0.01
 #integralError= 0
-L = np.array([[17.0], [-0.3]])  # Observer gain matrix
+L = np.array([[17.0], [4.3]])  # Observer gain matrix
 u = 0 #input
 
 #THIS IS THE BEGINNING OF THE SECTION WHERE WE CAN ENABLE/DISABLE DIFFERENT FUNCTIONS OF THE PROGRAM
-ENABLE_DATA_RECORDING = True
+ENABLE_DATA_RECORDING = False
 
 
 #THIS IS THE END OF THE SECTION WHERE WE CAN ENABLE/DISABLE DIFFERENT FUNCTIONS OF THE PROGRAM
 
 
 
-# Replace with the Arduino port. Can be found in the Arduino IDE (Tools -> Port:)
+
 port = "COM10"
 setptRedrPrt = "COM8" #Com port for reading the user input for the setpoint for motor position
 
@@ -87,9 +87,7 @@ def saveObserverData(observerAngularPosition, observerAngularVelocity, qube):
         iteration += 1
 
 
-#serialSPRedr = serial.Serial(setptRedrPrt, 9600, timeout=1)
 
-#controlOutput = SSController.runControlLoop(qube.getMotorAngle(), 0, 0.0001)
 
 def control(data, lock):
     global m_target, p_target, pid, controlOutput, SSController, zoh, lastRunTime
@@ -101,7 +99,6 @@ def control(data, lock):
         logdata = qube.getLogData(m_target, p_target)
         save_data(logdata)
 
-        # Multithreading stuff that must happen. Dont mind it.
         with lock:
             doMTStuff(data)
 
@@ -113,7 +110,7 @@ def control(data, lock):
             saveObserverData(SSController.getObsState1()[0], SSController.getObsState2()[0], qube)
             # ----------------- THIS IS SAVING THE STATES IN THE CSV FILE --------------------------
 
-        #if zoh.ckeckTimer(time.perf_counter()):
+
         #controlOutput = SSController.runControlLoop(qube.getMotorAngle(), seriServoSpReader(serialSPRedr), time.perf_counter()-lastRunTime)
         controlOutput = SSController.runControlLoop(qube.getMotorAngle(), 0, time.perf_counter() - lastRunTime)
         lastRunTime = time.perf_counter()
